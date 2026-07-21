@@ -1,0 +1,6 @@
+zturn:
+{
+	[bootloader] fsbl.elf
+	Top.bit
+	build/firmware.elf
+}
