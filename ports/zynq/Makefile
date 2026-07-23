@@ -1,59 +1,55 @@
-# Include the core environment definitions; this will set $(TOP).
 include ../../py/mkenv.mk
 
-# Include py core make definitions.
+CROSS = 0
+
+# qstr definitions (must come before including py.mk)
+QSTR_DEFS = qstrdefsport.h
+
+# MicroPython feature configurations
+MICROPY_ROM_TEXT_COMPRESSION ?= 1
+
+# include py core make definitions
 include $(TOP)/py/py.mk
 
-# Define used paths
-ROOTDIR 		 = $(realpath .)
-SPECS_FILE 		:= $(ROOTDIR)/bsp/Xilinx.spec
-# BSP_SRC 		:= $(ROOTDIR)/bsp/libsrc
-BSP_HEADERS 	:= $(ROOTDIR)/bsp/include
-BSP_LIBS_PATH 	:= $(ROOTDIR)/bsp/lib
-
-# Set makefile-level MicroPython feature configurations.
-MICROPY_ROM_TEXT_COMPRESSION ?= 0
-
-# Define toolchain and other tools.
+ifeq ($(CROSS), 1)
 CROSS_COMPILE ?= $${XILINX_VITIS}/gnu/aarch32/lin/gcc-arm-none-eabi/bin/arm-none-eabi-
-DFU ?= $(TOP)/tools/dfu.py
-PYDFU ?= $(TOP)/tools/pydfu.py
+endif
 
-# Set CFLAGS.
-CFLAGS += -I. -I$(TOP) -I$(BUILD) -I$(BSP_HEADERS)
-CFLAGS += -Wall -Werror -std=c99
-CFLAGS += -DSDT -mthumb -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -MMD -MP -specs=$(SPECS_FILE)
-CSUPEROPT = -Os # save some code space for performance-critical code
+INC += -I.
+INC += -I$(TOP)
+INC += -I$(BUILD)
+INC += -I./bsp/include
 
-# CFLAGS		 := -DSDT -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -MMD -MP \
-# 				-specs=$(SPECS_FILE) -I$(BSP_HEADERS)
-# CFLAGS_EXTRA := -O2 -g -Wall -Wextra -fno-tree-loop-distribute-patterns -DNDEBUG
+ifeq ($(CROSS), 1)
+DFU = $(TOP)/tools/dfu.py
+PYDFU = $(TOP)/tools/pydfu.py
+# CFLAGS_CORTEX_M4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -msoft-float -fsingle-precision-constant -Wdouble-promotion -Wfloat-conversion
+CFLAGS_CORTEX_A9 = -mthumb -mcpu=cortex-a9 -msoft-float -fsingle-precision-constant -Wdouble-promotion -Wfloat-conversion
+COPT += -DSDT
+CFLAGS += $(INC) -Wall -Werror -std=c99 $(CFLAGS_CORTEX_A9) $(COPT)
+LDFLAGS += -nostdlib -T lscript.ld -Wl,-Map=$@.map -Wl,--cref -Wl,--gc-sections \
+		   -L"./bsp/lib"
+else
+UNAME_S := $(shell uname -s)
+LD = $(CC)
+CFLAGS += $(INC) -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99 $(COPT)
+ifeq ($(UNAME_S),Linux)
+LDFLAGS += -Wl,-Map=$@.map,--cref -Wl,--gc-sections
+else ifeq ($(UNAME_S),Darwin)
+LDFLAGS += -Wl,-map,$@.map -Wl,-dead_strip
+endif
+endif
 
-# Select debugging or optimisation build.
+CSUPEROPT = -Os # save some code space
+
+# Tune for Debugging or Optimization
+CFLAGS += -g  # always include debug info in the ELF
 ifeq ($(DEBUG), 1)
-CFLAGS += -Og
+CFLAGS += -O0
 else
 CFLAGS += -Os -DNDEBUG
 CFLAGS += -fdata-sections -ffunction-sections
 endif
-
-# Set linker flags.
-# For some reason linker doesn't search for libraries in sysroot dirs.
-# Pass the paths explicitly for now.
-LDFLAGS += -T lscript.ld \
-		   -specs=$(SPECS_FILE) \
-		   -L"$(BSP_LIBS_PATH)" -L"/" \
-		   -L"$${XILINX_VITIS}/gnu/aarch32/lin/gcc-arm-none-eabi/aarch32-xilinx-eabi/usr/lib" \
-		   -L"$${XILINX_VITIS}/gnu/aarch32/lin/gcc-arm-none-eabi/aarch32-xilinx-eabi/usr/lib/arm-xilinx-eabi/13.3.0" \
-		   -Wl,--start-group -Wl,$(LIBS) -Wl,--end-group
-
-# Define the required source files.
-# SRC_C += lib.c main.c system.c
-SRC_C += lib.c main.c
-
-# Define the required object files.
-OBJ += $(PY_CORE_O)
-OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 
 # Define static libs
 comma:= ,
@@ -63,24 +59,60 @@ LIBS := xil xilstandalone gcc c
 LIBS := $(addprefix -l,$(LIBS))
 LIBS := $(subst $(space),$(comma),$(LIBS))
 
-# Define the top-level target, the main firmware.
+SRC_C = \
+	main.c \
+	uart_core.c \
+	shared/libc/printf.c \
+	shared/readline/readline.c \
+	shared/runtime/pyexec.c \
+	shared/runtime/stdout_helpers.c \
+	$(BUILD)/_frozen_mpy.c \
+
+ifeq ($(CROSS), 1)
+SRC_C += shared/libc/string0.c
+endif
+
+SRC_QSTR += shared/readline/readline.c shared/runtime/pyexec.c
+
+OBJ += $(PY_CORE_O)
+OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_CXX:.cpp=.o))
+
+ifeq ($(CROSS), 1)
 all: $(BUILD)/firmware.dfu
+else
+all: $(BUILD)/firmware.elf
+endif
+
+$(BUILD)/_frozen_mpy.c: $(TOP)/tests/assets/frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
+	$(ECHO) "MISC freezing bytecode"
+	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
 
 $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(CC) $^ -o $@ $(LDFLAGS)
+	$(Q)$(CC) $(LDFLAGS) -o $@ $^ -Wl,--start-group -Wl,$(LIBS) -Wl,--end-group
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
-	$(ECHO) "Create $@"
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $(BUILD)/firmware.bin
 
 $(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
 	$(ECHO) "Create $@"
-	$(Q)$(PYTHON) $(DFU) -b 0x08000000:$^ $@
+	$(Q)$(PYTHON) $(DFU) -b 0x08000000:$(BUILD)/firmware.bin $@
 
 deploy: $(BUILD)/firmware.dfu
-	$(Q)$(PYTHON) $(PYDFU) -u $^
+	$(ECHO) "Writing $< to the board"
+	$(Q)$(PYTHON) $(PYDFU) -u $<
 
-# Include remaining core make rules.
+# Run emulation build on a POSIX system with suitable terminal settings
+run:
+	@saved_=`stty -g`; \
+	  stty raw opost -echo; \
+	  $(BUILD)/firmware.elf; \
+	  echo "Exit status: $$?"; \
+	  stty $$saved_
+
+test: $(BUILD)/firmware.elf
+	$(Q)/usr/bin/printf "print('hello world!', list(x+1 for x in range(10)), end='eol\\\\n')\\r\\n\\004" | $(BUILD)/firmware.elf | tail -n2 | grep "^hello world! \\[1, 2, 3, 4, 5, 6, 7, 8, 9, 10\\]eol"
+
 include $(TOP)/py/mkrules.mk
