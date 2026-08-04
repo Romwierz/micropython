@@ -34,6 +34,7 @@
 #include "py/gc.h"
 #include "py/mperrno.h"
 #include "shared/runtime/pyexec.h"
+#include "xuartps_hw.h"
 
 #define PS_CLK 33330000
 
@@ -134,11 +135,8 @@ static char heap[MICROPY_HEAP_SIZE];
 // Main entry point: initialise the runtime and execute demo strings.
 int main(void) {
 	uart_init(XUARTPS_BASEADDRESS);
-
-    xil_printf("SLCR_PLL_STATUS: 0x%08x\n\r", Xil_In32(XPAR_SLCR_BASEADDR + SLCR_PLL_STATUS));
-    xil_printf("SLCR_IO_PLL_CTRL: 0x%08x\n\r", Xil_In32(XPAR_SLCR_BASEADDR + SLCR_IO_PLL_CTRL));
-    xil_printf("SLCR_IO_PLL_CFG: 0x%08x\n\r", Xil_In32(XPAR_SLCR_BASEADDR + SLCR_IO_PLL_CFG));
-    xil_printf("SLCR_UART_CLK_CTRL: 0x%08x\n\r", Xil_In32(XPAR_SLCR_BASEADDR + SLCR_UART_CLK_CTRL));
+    outbyte('x');
+    outbyte('\n');
 
     int stack_dummy;
     stack_top = (char *)&stack_dummy;
@@ -225,8 +223,3 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
     }
 }
 #endif
-
-// Define those so the linker doesn't complain.
-// https://stackoverflow.com/questions/13734745/why-do-i-have-an-undefined-reference-to-init-in-libc-init-array
-void _init(void){};
-void _fini(void){};

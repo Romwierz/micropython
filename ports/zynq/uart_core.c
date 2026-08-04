@@ -1,5 +1,6 @@
 #include "xstatus.h"
 #include "xuartps.h"
+#include "xuartps_hw.h"
 #include "xparameters.h"
 #include "py/mpconfig.h"
 

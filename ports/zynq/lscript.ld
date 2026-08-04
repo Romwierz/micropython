@@ -14,7 +14,7 @@ _UNDEF_STACK_SIZE = DEFINED(_UNDEF_STACK_SIZE) ? _UNDEF_STACK_SIZE : 1024;
 
 /* Define the sections, and where they are mapped in memory */
 
-ENTRY(_start)
+ENTRY(main)
 
 MEMORY
 {

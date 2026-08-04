@@ -11,34 +11,19 @@ MICROPY_ROM_TEXT_COMPRESSION ?= 1
 # include py core make definitions
 include $(TOP)/py/py.mk
 
-ifeq ($(CROSS), 1)
 CROSS_COMPILE ?= $${XILINX_VITIS}/gnu/aarch32/lin/gcc-arm-none-eabi/bin/arm-none-eabi-
-endif
 
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
-INC += -I./bsp/include
 
-ifeq ($(CROSS), 1)
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
-# CFLAGS_CORTEX_M4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -msoft-float -fsingle-precision-constant -Wdouble-promotion -Wfloat-conversion
 CFLAGS_CORTEX_A9 = -mthumb -mcpu=cortex-a9 -msoft-float -fsingle-precision-constant -Wdouble-promotion -Wfloat-conversion
-COPT += -DSDT
+COPT += -DSDT -specs=Xilinx.spec
 CFLAGS += $(INC) -Wall -Werror -std=c99 $(CFLAGS_CORTEX_A9) $(COPT)
-LDFLAGS += -nostdlib -T lscript.ld -Wl,-Map=$@.map -Wl,--cref -Wl,--gc-sections \
-		   -L"./bsp/lib"
-else
-UNAME_S := $(shell uname -s)
-LD = $(CC)
-CFLAGS += $(INC) -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99 $(COPT)
-ifeq ($(UNAME_S),Linux)
-LDFLAGS += -Wl,-Map=$@.map,--cref -Wl,--gc-sections
-else ifeq ($(UNAME_S),Darwin)
-LDFLAGS += -Wl,-map,$@.map -Wl,-dead_strip
-endif
-endif
+LDFLAGS += -T lscript.ld -Wl,-Map=$@.map -Wl,--cref -Wl,--gc-sections \
+		   -Wl,--trace
 
 CSUPEROPT = -Os # save some code space
 
@@ -51,16 +36,10 @@ CFLAGS += -Os -DNDEBUG
 CFLAGS += -fdata-sections -ffunction-sections
 endif
 
-# Define static libs
-comma:= ,
-empty:=
-space:= $(empty) $(empty)
-LIBS := xil xilstandalone gcc c
-LIBS := $(addprefix -l,$(LIBS))
-LIBS := $(subst $(space),$(comma),$(LIBS))
-
 SRC_C = \
 	main.c \
+	xuartps.c \
+	xuartps_hw.c \
 	uart_core.c \
 	shared/libc/printf.c \
 	shared/readline/readline.c \
@@ -90,7 +69,7 @@ $(BUILD)/_frozen_mpy.c: $(TOP)/tests/assets/frozentest.mpy $(BUILD)/genhdr/qstrd
 
 $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(CC) $(LDFLAGS) -o $@ $^ -Wl,--start-group -Wl,$(LIBS) -Wl,--end-group
+	$(Q)$(CC) $(LDFLAGS) -o $@ $^
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
