@@ -1,0 +1,12 @@
+*.elf
+*.bin
+*.bin.bkup
+*.o
+*.d
+*.a
+*.bit
+*.clangd
+*.map
+*.tar.xz
+*.bkup
+bsp/
