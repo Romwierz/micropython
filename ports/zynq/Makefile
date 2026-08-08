@@ -1,7 +1,5 @@
 include ../../py/mkenv.mk
 
-CROSS = 0
-
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = qstrdefsport.h
 
@@ -22,10 +20,15 @@ PYDFU = $(TOP)/tools/pydfu.py
 CFLAGS_CORTEX_A9 = -mthumb -mcpu=cortex-a9 -msoft-float -fsingle-precision-constant -Wdouble-promotion -Wfloat-conversion
 COPT += -DSDT -specs=Xilinx.spec
 CFLAGS += $(INC) -Wall -Werror -std=c99 $(CFLAGS_CORTEX_A9) $(COPT)
-LDFLAGS += -T lscript.ld -Wl,-Map=$@.map -Wl,--cref -Wl,--gc-sections \
-		   -Wl,--trace
+LDFLAGS += -nostdlib -T lscript.ld -Wl,-Map=$@.map -Wl,--cref -Wl,--gc-sections
+ifeq ($(BUILD_VERBOSE),1)
+LDFLAGS += -Wl,--trace
+endif
 
 CSUPEROPT = -Os # save some code space
+
+LIBGCC_FILE_NAME = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
+LIBS += -L$(dir $(LIBGCC_FILE_NAME)) -lgcc
 
 # Tune for Debugging or Optimization
 CFLAGS += -g  # always include debug info in the ELF
@@ -41,15 +44,12 @@ SRC_C = \
 	xuartps.c \
 	xuartps_hw.c \
 	uart_core.c \
+	shared/libc/string0.c \
 	shared/libc/printf.c \
 	shared/readline/readline.c \
 	shared/runtime/pyexec.c \
 	shared/runtime/stdout_helpers.c \
 	$(BUILD)/_frozen_mpy.c \
-
-ifeq ($(CROSS), 1)
-SRC_C += shared/libc/string0.c
-endif
 
 SRC_QSTR += shared/readline/readline.c shared/runtime/pyexec.c
 
@@ -57,11 +57,7 @@ OBJ += $(PY_CORE_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_CXX:.cpp=.o))
 
-ifeq ($(CROSS), 1)
-all: $(BUILD)/firmware.dfu
-else
 all: $(BUILD)/firmware.elf
-endif
 
 $(BUILD)/_frozen_mpy.c: $(TOP)/tests/assets/frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
 	$(ECHO) "MISC freezing bytecode"
@@ -69,7 +65,7 @@ $(BUILD)/_frozen_mpy.c: $(TOP)/tests/assets/frozentest.mpy $(BUILD)/genhdr/qstrd
 
 $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(CC) $(LDFLAGS) -o $@ $^
+	$(Q)$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
