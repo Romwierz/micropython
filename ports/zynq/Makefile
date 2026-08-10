@@ -16,8 +16,7 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
 
-DFU = $(TOP)/tools/dfu.py
-PYDFU = $(TOP)/tools/pydfu.py
+BOOT_IMG = boot.bin
 CFLAGS_CORTEX_A9 = -mthumb -mcpu=cortex-a9 -msoft-float -fsingle-precision-constant -Wdouble-promotion -Wfloat-conversion
 COPT += -DSDT -specs=Xilinx.spec
 CFLAGS += $(INC) -Wall -Werror -std=c99 $(CFLAGS_CORTEX_A9) $(COPT)
@@ -56,8 +55,17 @@ SRC_QSTR += shared/readline/readline.c shared/runtime/pyexec.c
 
 OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(SRC_CXX:.cpp=.o))
 
+# Custom functions
+define WRITE_BOOT_DEV
+	@sh -c '{ [ -n "$(DEV)" ] && [ -n "$(MNT_POINT)" ]; } || \
+		{ echo "Cannot write to SD card: DEV or MNT_POINT not specified"; exit 1; }'
+	@sh -c '[ -b $(DEV) ] || { echo "Cannot write to SD card: $(DEV) does not exist"; exit 1; }'
+	$(ECHO) "Writing $< to SD card..."
+	@sudo sh -c "mount $(DEV) $(MNT_POINT) && $(CP) -v $< $(MNT_POINT) && umount $(MNT_POINT)"
+endef
+
+# Targets
 all: $(BUILD)/firmware.elf
 
 $(BUILD)/_frozen_mpy.c: $(TOP)/tests/assets/frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
@@ -69,26 +77,10 @@ $(BUILD)/firmware.elf: $(OBJ)
 	$(Q)$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 	$(Q)$(SIZE) $@
 
-$(BUILD)/firmware.bin: $(BUILD)/firmware.elf
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $(BUILD)/firmware.bin
+$(BOOT_IMG): $(BUILD)/firmware.elf
+	bootgen -arch zynq -image zturn.bif -w on -o $@
 
-$(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
-	$(ECHO) "Create $@"
-	$(Q)$(PYTHON) $(DFU) -b 0x08000000:$(BUILD)/firmware.bin $@
-
-deploy: $(BUILD)/firmware.dfu
-	$(ECHO) "Writing $< to the board"
-	$(Q)$(PYTHON) $(PYDFU) -u $<
-
-# Run emulation build on a POSIX system with suitable terminal settings
-run:
-	@saved_=`stty -g`; \
-	  stty raw opost -echo; \
-	  $(BUILD)/firmware.elf; \
-	  echo "Exit status: $$?"; \
-	  stty $$saved_
-
-test: $(BUILD)/firmware.elf
-	$(Q)/usr/bin/printf "print('hello world!', list(x+1 for x in range(10)), end='eol\\\\n')\\r\\n\\004" | $(BUILD)/firmware.elf | tail -n2 | grep "^hello world! \\[1, 2, 3, 4, 5, 6, 7, 8, 9, 10\\]eol"
+deploy: $(BOOT_IMG)
+	$(call WRITE_BOOT_DEV)
 
 include $(TOP)/py/mkrules.mk
