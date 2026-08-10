@@ -37,7 +37,8 @@ typedef long mp_off_t;
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
 
-#define MICROPY_HW_BOARD_NAME "zynq"
+#define MICROPY_PY_SYS_PLATFORM "zynq"
+#define MICROPY_HW_BOARD_NAME "z-turn"
 #define MICROPY_HW_MCU_NAME "cortex-a9"
 
 #if defined(__linux__) || defined(__APPLE__)
