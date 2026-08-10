@@ -8,6 +8,7 @@ MICROPY_ROM_TEXT_COMPRESSION ?= 1
 
 # include py core make definitions
 include $(TOP)/py/py.mk
+include $(TOP)/extmod/extmod.mk
 
 CROSS_COMPILE ?= $${XILINX_VITIS}/gnu/aarch32/lin/gcc-arm-none-eabi/bin/arm-none-eabi-
 
@@ -53,7 +54,7 @@ SRC_C = \
 
 SRC_QSTR += shared/readline/readline.c shared/runtime/pyexec.c
 
-OBJ += $(PY_CORE_O)
+OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_CXX:.cpp=.o))
 

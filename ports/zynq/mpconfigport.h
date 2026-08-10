@@ -1,9 +1,9 @@
 #include <stdint.h>
 
-// options to control how MicroPython is built
+// Options controlling how MicroPython is built, overriding defaults in py/mpconfig.h
 
-// Use the minimal starting configuration (disables all optional features).
-#define MICROPY_CONFIG_ROM_LEVEL (MICROPY_CONFIG_ROM_LEVEL_MINIMUM)
+// Config level
+#define MICROPY_CONFIG_ROM_LEVEL (MICROPY_CONFIG_ROM_LEVEL_CORE_FEATURES)
 
 // You can disable the built-in MicroPython compiler by setting the following
 // config option to 0.  If you do this then you won't get a REPL prompt, but you
@@ -26,6 +26,9 @@
 #define MICROPY_PY_SYS_EXIT               (0)
 #define MICROPY_PY_SYS_PATH               (0)
 #define MICROPY_PY_SYS_ARGV               (0)
+
+// Python internal features
+#define MICROPY_VFS                         (1)
 
 // type definitions for the specific machine
 
