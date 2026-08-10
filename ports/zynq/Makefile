@@ -44,6 +44,7 @@ SRC_C = \
 	xuartps.c \
 	xuartps_hw.c \
 	uart_core.c \
+	mphalport.c \
 	shared/libc/string0.c \
 	shared/libc/printf.c \
 	shared/readline/readline.c \
