@@ -1,3 +1,5 @@
+#include "xparameters_ps.h"
+
 #define PS_CLK 33330000
 
 // GPIO registers offsets
@@ -32,6 +34,29 @@
 
 #define	XUARTPS_BASEADDRESS	XPAR_XUARTPS_1_BASEADDR
 
-/* xil_printf.h */
-extern void outbyte (char c); /**< To send byte */
-extern char inbyte(void); /**< To receive byte */
+// utils
+static inline void set_bit(unsigned int nr, volatile unsigned int *addr)
+{
+    unsigned int mask = 1U << nr;
+    *addr  |= mask;
+}
+
+static inline void clear_bit(unsigned int nr, volatile unsigned int *addr)
+{
+    unsigned int mask = 1U << nr;
+    *addr &= ~mask;
+}
+
+static inline void delay(volatile unsigned int cycles)
+{
+    while (cycles--);
+}
+
+// bspconfig.h
+#define XPAR_STDIN_IS_UARTPS  
+#define STDIN_BASEADDRESS XPS_UART1_BASEADDR
+#define STDOUT_BASEADDRESS XPS_UART1_BASEADDR
+
+// xil_printf.h
+// extern void outbyte (char c); /**< To send byte */
+// extern char inbyte(void); /**< To receive byte */

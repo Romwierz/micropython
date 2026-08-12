@@ -50,7 +50,6 @@ extern "C" {
 
 #include <stdint.h>
 #include <stddef.h>
-#include "bspconfig.h"
 #include "xparameters.h"
 
 /************************** Constant Definitions *****************************/
