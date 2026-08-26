@@ -1,4 +1,13 @@
+# Define default board
+BOARD ?= Z-TURN
+BOARD_DIR ?= boards/$(BOARD)
+
+ifeq ($(wildcard $(BOARD_DIR)/.),)
+$(error Invalid BOARD specified: $(BOARD_DIR))
+endif
+
 include ../../py/mkenv.mk
+include $(BOARD_DIR)/mpconfigboard.mk
 
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = qstrdefsport.h
@@ -18,6 +27,7 @@ CROSS_COMPILE ?= $${XILINX_VITIS}/gnu/aarch32/lin/gcc-arm-none-eabi/bin/arm-none
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
+INC += -I$(BOARD_DIR)
 
 BOOT_IMG = boot.bin
 CFLAGS_CORTEX_A9 = -mthumb -mcpu=cortex-a9 -msoft-float -fsingle-precision-constant -Wdouble-promotion -Wfloat-conversion

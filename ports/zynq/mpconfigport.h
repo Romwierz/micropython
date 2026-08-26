@@ -2,6 +2,9 @@
 
 // Options controlling how MicroPython is built, overriding defaults in py/mpconfig.h
 
+// Board specific definitions
+#include "mpconfigboard.h"
+
 // Config level
 #define MICROPY_CONFIG_ROM_LEVEL (MICROPY_CONFIG_ROM_LEVEL_CORE_FEATURES)
 
@@ -37,8 +40,6 @@ typedef long mp_off_t;
 #include <alloca.h>
 
 #define MICROPY_PY_SYS_PLATFORM "zynq"
-#define MICROPY_HW_BOARD_NAME "z-turn"
-#define MICROPY_HW_MCU_NAME "cortex-a9"
 
 #if defined(__linux__) || defined(__APPLE__)
 #define MICROPY_MIN_USE_STDOUT (1)
