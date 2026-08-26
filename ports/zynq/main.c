@@ -95,6 +95,10 @@ int main(void) {
     gc_init(heap, heap + sizeof(heap));
     #endif
     mp_init();
+
+    // Execute _boot.py
+    pyexec_frozen_module("_boot.py", false);
+
     do_str(demo_single_input, MP_PARSE_SINGLE_INPUT);
     do_str(demo_file_input, MP_PARSE_FILE_INPUT);
     #if MICROPY_REPL_EVENT_DRIVEN

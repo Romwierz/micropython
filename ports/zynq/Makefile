@@ -6,6 +6,9 @@ QSTR_DEFS = qstrdefsport.h
 # MicroPython feature configurations
 MICROPY_ROM_TEXT_COMPRESSION ?= 1
 
+# File containing description of content to be frozen into firmware.
+FROZEN_MANIFEST ?= manifest.py
+
 # include py core make definitions
 include $(TOP)/py/py.mk
 include $(TOP)/extmod/extmod.mk
@@ -50,7 +53,6 @@ SRC_C = \
 	shared/readline/readline.c \
 	shared/runtime/pyexec.c \
 	shared/runtime/stdout_helpers.c \
-	$(BUILD)/_frozen_mpy.c \
 
 SRC_QSTR += shared/readline/readline.c shared/runtime/pyexec.c
 
@@ -68,10 +70,6 @@ endef
 
 # Targets
 all: $(BUILD)/firmware.elf
-
-$(BUILD)/_frozen_mpy.c: $(TOP)/tests/assets/frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
-	$(ECHO) "MISC freezing bytecode"
-	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
 
 $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
