@@ -25,9 +25,6 @@
  */
 
 #include <string.h>
-#include "xuartps.h"
-#include "xparameters.h"
-#include "system.h"
 
 #include "py/builtin.h"
 #include "py/compile.h"
@@ -37,15 +34,17 @@
 #include "shared/runtime/pyexec.h"
 #include "xuartps_hw.h"
 
-int uart_init(UINTPTR BaseAddress);
+#include "xil_io.h"
+#include "xuartps.h"
+#include "xparameters.h"
+#include "system.h"
 
-unsigned int * const XGPIOPS = (unsigned int *)0xe000a000;
-volatile unsigned int * const SLCR = (unsigned int *)0xf8000000;
+int uart_init(UINTPTR BaseAddress);
 
 void configure_mio0_9(void)
 {
-    SLCR[MIO_PIN_00] = MIO_PIN_DisableRcvr | MIO_PIN_IO_Type_LVCMOS18;
-    SLCR[MIO_PIN_09] = MIO_PIN_DisableRcvr | MIO_PIN_IO_Type_LVCMOS18;
+    Xil_Out32(XPAR_SLCR_BASEADDR + MIO_PIN_00, MIO_PIN_DisableRcvr | MIO_PIN_IO_Type_LVCMOS18);
+    Xil_Out32(XPAR_SLCR_BASEADDR + MIO_PIN_09, MIO_PIN_DisableRcvr | MIO_PIN_IO_Type_LVCMOS18);
 }
 
 static const char *demo_single_input =
@@ -85,8 +84,6 @@ static char heap[MICROPY_HEAP_SIZE];
 // Main entry point: initialise the runtime and execute demo strings.
 int main(void) {
 	uart_init(XUARTPS_BASEADDRESS);
-    outbyte('x');
-    outbyte('\n');
 
     int stack_dummy;
     stack_top = (char *)&stack_dummy;
@@ -119,19 +116,19 @@ int main(void) {
     configure_mio0_9();
 
     // Configure MIO pins 0,9 (User LED 1,2) as output and enable it
-    set_bit(0, &XGPIOPS[DIRM0]);
-    set_bit(0, &XGPIOPS[OEN0]);
-    set_bit(9, &XGPIOPS[DIRM0]);
-    set_bit(9, &XGPIOPS[OEN0]);
+    set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DIRM0));
+    set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + OEN0));
+    set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DIRM0));
+    set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + OEN0));
 
 
     // Toggle the leds
     while(1) {
-        clear_bit(0, &XGPIOPS[DATA0]);
-        set_bit(9, &XGPIOPS[DATA0]);
+        clear_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
+        set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
         delay(4000000U);
-        set_bit(0, &XGPIOPS[DATA0]);
-        clear_bit(9, &XGPIOPS[DATA0]);
+        set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
+        clear_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
         delay(4000000U);
     };
 

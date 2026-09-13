@@ -3,14 +3,14 @@
 #define PS_CLK 33330000
 
 // GPIO registers offsets
-#define DATA0 0x00000040/4
-#define DIRM0 0x00000204/4
-#define OEN0  0x00000208/4
+#define DATA0 0x00000040U
+#define DIRM0 0x00000204U
+#define OEN0  0x00000208U
 
 // MIO registers offsets
-#define MIO_PIN_00 0x00000700/4 // User LED 1
-#define MIO_PIN_09 0x00000724/4 // User LED 2
-#define MIO_PIN_11 0x0000072c/4 // UART0 Tx
+#define MIO_PIN_00 0x00000700 // User LED 1
+#define MIO_PIN_09 0x00000724 // User LED 2
+#define MIO_PIN_11 0x0000072c // UART0 Tx
 
 // SLCR registers offsets
 #define SLCR_IO_PLL_CTRL   0x00000108
