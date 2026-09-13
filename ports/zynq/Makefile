@@ -30,9 +30,10 @@ INC += -I$(BUILD)
 INC += -I$(BOARD_DIR)
 
 BOOT_IMG = boot.bin
-CFLAGS_CORTEX_A9 = -mthumb -mcpu=cortex-a9 -msoft-float -fsingle-precision-constant -Wdouble-promotion -Wfloat-conversion
-COPT += -DSDT -specs=Xilinx.spec
-CFLAGS += $(INC) -Wall -Werror -std=c99 $(CFLAGS_CORTEX_A9) $(COPT)
+CFLAGS_CORTEX_A9 = -mthumb -mcpu=cortex-a9 -msoft-float -fsingle-precision-constant \
+				   -Wdouble-promotion -Wfloat-conversion -DSDT -specs=Xilinx.spec
+# Use C_ADD_FLAGS to pass flags when invoking make
+CFLAGS += $(INC) -Wall -Werror -std=c99 $(CFLAGS_CORTEX_A9) $(C_ADD_FLAGS)
 LDFLAGS += -nostdlib -T lscript.ld -Wl,-Map=$@.map -Wl,--cref -Wl,--gc-sections
 ifeq ($(BUILD_VERBOSE),1)
 LDFLAGS += -Wl,--trace
@@ -79,7 +80,7 @@ define WRITE_BOOT_DEV
 endef
 
 # Targets
-all: $(BUILD)/firmware.elf
+all: $(BUILD)/firmware.elf cp-compilation-db
 
 $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
@@ -91,5 +92,8 @@ $(BOOT_IMG): $(BUILD)/firmware.elf
 
 deploy: $(BOOT_IMG)
 	$(call WRITE_BOOT_DEV)
+
+cp-compilation-db:
+	@sh -c "[ -f compile_commands.json ] && cp -u compile_commands.json $(TOP)"
 
 include $(TOP)/py/mkrules.mk
