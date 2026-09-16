@@ -34,6 +34,7 @@
 #include "shared/runtime/pyexec.h"
 #include "xuartps_hw.h"
 
+#include "gccollect.h"
 #include "xil_io.h"
 #include "xuartps.h"
 #include "xparameters.h"
@@ -77,20 +78,18 @@ void do_str(const char *src, mp_parse_input_kind_t input_kind) {
 #endif
 
 static char *stack_top;
-#if MICROPY_ENABLE_GC
-static char heap[MICROPY_HEAP_SIZE];
-#endif
 
 // Main entry point: initialise the runtime and execute demo strings.
 int main(void) {
 	uart_init(XUARTPS_BASEADDRESS);
 
-    int stack_dummy;
-    stack_top = (char *)&stack_dummy;
+    // Stack limit init
+    mp_cstack_init_with_top(&_stack_end, (char *)&_stack_end - (char *)&_stack);
 
-    #if MICROPY_ENABLE_GC
-    gc_init(heap, heap + sizeof(heap));
-    #endif
+    // GC init
+    gc_init(MICROPY_HEAP_START, MICROPY_HEAP_END);
+
+    // MicroPython init
     mp_init();
 
     // Execute _boot.py

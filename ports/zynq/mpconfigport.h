@@ -53,3 +53,14 @@ typedef long mp_off_t;
 #endif
 
 #define MP_STATE_PORT MP_STATE_VM
+
+/*****************************************************************************/
+// General configuration
+
+// Heap start / end definitions
+#ifndef MICROPY_HEAP_START
+#define MICROPY_HEAP_START &_heap_start
+#endif
+#ifndef MICROPY_HEAP_END
+#define MICROPY_HEAP_END &_heap_end
+#endif
