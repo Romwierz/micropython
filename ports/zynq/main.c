@@ -41,6 +41,7 @@
 #include "system.h"
 
 int uart_init(UINTPTR BaseAddress);
+void blink_leds(void);
 
 void configure_mio0_9(void)
 {
@@ -111,27 +112,12 @@ int main(void) {
     do_str("print('hello world!', list(x+1 for x in range(10)), end='eol\\n')", MP_PARSE_SINGLE_INPUT);
     do_str("for i in range(10):\r\n  print(i)", MP_PARSE_FILE_INPUT);
 
-    // Congigure MIO0,9 as GPIO
-    configure_mio0_9();
-
-    // Configure MIO pins 0,9 (User LED 1,2) as output and enable it
-    set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DIRM0));
-    set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + OEN0));
-    set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DIRM0));
-    set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + OEN0));
-
-
-    // Toggle the leds
-    while(1) {
-        clear_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
-        set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
-        delay(4000000U);
-        set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
-        clear_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
-        delay(4000000U);
-    };
-
+    soft_reset_exit:
+    mp_printf(MP_PYTHON_PRINTER, "MPY: soft reboot (not yet implemented)\n");
     mp_deinit();
+
+    // Signal the end of MPY execution by blinking the leds
+    blink_leds();
 }
 
 #if MICROPY_ENABLE_GC
@@ -171,3 +157,24 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
     }
 }
 #endif
+
+void blink_leds(void) {
+    // Configure MIO0,9 as GPIO
+    configure_mio0_9();
+
+    // Configure MIO pins 0,9 (User LED 1,2) as output and enable it
+    set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DIRM0));
+    set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + OEN0));
+    set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DIRM0));
+    set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + OEN0));
+
+    // Toggle the leds
+    while(1) {
+        clear_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
+        set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
+        delay(4000000U);
+        set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
+        clear_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
+        delay(4000000U);
+    };
+}
