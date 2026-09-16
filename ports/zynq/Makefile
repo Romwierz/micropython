@@ -53,22 +53,27 @@ CFLAGS += -Os -DNDEBUG
 CFLAGS += -fdata-sections -ffunction-sections
 endif
 
+SHARED_SRC_C += $(addprefix shared/,\
+	libc/string0.c \
+	libc/printf.c \
+	readline/readline.c \
+	runtime/pyexec.c \
+	runtime/stdout_helpers.c \
+	)
+
 SRC_C = \
 	main.c \
 	xuartps.c \
 	xuartps_hw.c \
 	uart_core.c \
 	mphalport.c \
-	shared/libc/string0.c \
-	shared/libc/printf.c \
-	shared/readline/readline.c \
-	shared/runtime/pyexec.c \
-	shared/runtime/stdout_helpers.c \
-
-SRC_QSTR += shared/readline/readline.c shared/runtime/pyexec.c
 
 OBJ += $(PY_O)
+OBJ += $(addprefix $(BUILD)/, $(SHARED_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+
+# List of sources for qstr extraction
+SRC_QSTR += $(SRC_C) $(SHARED_SRC_C)
 
 # Custom functions
 define WRITE_BOOT_DEV
