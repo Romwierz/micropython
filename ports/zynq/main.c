@@ -41,23 +41,13 @@
 #include "system.h"
 
 int uart_init(UINTPTR BaseAddress);
+void blink_leds(void);
 
 void configure_mio0_9(void)
 {
     Xil_Out32(XPAR_SLCR_BASEADDR + MIO_PIN_00, MIO_PIN_DisableRcvr | MIO_PIN_IO_Type_LVCMOS18);
     Xil_Out32(XPAR_SLCR_BASEADDR + MIO_PIN_09, MIO_PIN_DisableRcvr | MIO_PIN_IO_Type_LVCMOS18);
 }
-
-static const char *demo_single_input =
-    "print('hello world!', list(x + 1 for x in range(10)), end='eol\\n')";
-
-static const char *demo_file_input =
-    "import micropython\n"
-    "\n"
-    "print(dir(micropython))\n"
-    "\n"
-    "for i in range(10):\n"
-    "    print('iter {:08}'.format(i))";
 
 #if MICROPY_ENABLE_COMPILER
 void do_str(const char *src, mp_parse_input_kind_t input_kind) {
@@ -95,8 +85,12 @@ int main(void) {
     // Execute _boot.py
     pyexec_frozen_module("_boot.py", false);
 
-    do_str(demo_single_input, MP_PARSE_SINGLE_INPUT);
-    do_str(demo_file_input, MP_PARSE_FILE_INPUT);
+    // Execute user script
+    int ret = pyexec_file_if_exists("boot.py");
+    if (ret & PYEXEC_FORCED_EXIT) {
+        goto soft_reset_exit;
+    }
+
     #if MICROPY_REPL_EVENT_DRIVEN
     pyexec_event_repl_init();
     for (;;) {
@@ -108,30 +102,13 @@ int main(void) {
     #else
     pyexec_friendly_repl();
     #endif
-    do_str("print('hello world!', list(x+1 for x in range(10)), end='eol\\n')", MP_PARSE_SINGLE_INPUT);
-    do_str("for i in range(10):\r\n  print(i)", MP_PARSE_FILE_INPUT);
 
-    // Congigure MIO0,9 as GPIO
-    configure_mio0_9();
-
-    // Configure MIO pins 0,9 (User LED 1,2) as output and enable it
-    set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DIRM0));
-    set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + OEN0));
-    set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DIRM0));
-    set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + OEN0));
-
-
-    // Toggle the leds
-    while(1) {
-        clear_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
-        set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
-        delay(4000000U);
-        set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
-        clear_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
-        delay(4000000U);
-    };
-
+    soft_reset_exit:
+    mp_printf(MP_PYTHON_PRINTER, "MPY: soft reboot (not yet implemented)\n");
     mp_deinit();
+
+    // Signal the end of MPY execution by blinking the leds
+    blink_leds();
 }
 
 #if MICROPY_ENABLE_GC
@@ -171,3 +148,24 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
     }
 }
 #endif
+
+void blink_leds(void) {
+    // Configure MIO0,9 as GPIO
+    configure_mio0_9();
+
+    // Configure MIO pins 0,9 (User LED 1,2) as output and enable it
+    set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DIRM0));
+    set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + OEN0));
+    set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DIRM0));
+    set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + OEN0));
+
+    // Toggle the leds
+    while(1) {
+        clear_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
+        set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
+        delay(4000000U);
+        set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
+        clear_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
+        delay(4000000U);
+    };
+}

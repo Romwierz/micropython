@@ -80,8 +80,8 @@ define WRITE_BOOT_DEV
 	@sh -c '{ [ -n "$(DEV)" ] && [ -n "$(MNT_POINT)" ]; } || \
 		{ echo "Cannot write to SD card: DEV or MNT_POINT not specified"; exit 1; }'
 	@sh -c '[ -b $(DEV) ] || { echo "Cannot write to SD card: $(DEV) does not exist"; exit 1; }'
-	$(ECHO) "Writing $< to SD card..."
-	@sudo sh -c "mount $(DEV) $(MNT_POINT) && $(CP) -v $< $(MNT_POINT) && umount $(MNT_POINT)"
+	$(ECHO) "Writing ${1}, ${2} to SD card..."
+	@sudo sh -c "mount $(DEV) $(MNT_POINT) && $(CP) -v ${1} ${2} $(MNT_POINT) && umount $(MNT_POINT)"
 endef
 
 # Targets
@@ -96,7 +96,7 @@ $(BOOT_IMG): $(BUILD)/firmware.elf
 	bootgen -arch zynq -image zturn.bif -w on -o $@
 
 deploy: $(BOOT_IMG)
-	$(call WRITE_BOOT_DEV)
+	$(call WRITE_BOOT_DEV,$(BOOT_IMG),boot.py)
 
 cp-compilation-db:
 	@sh -c "[ -f compile_commands.json ] && cp -u compile_commands.json $(TOP)"
