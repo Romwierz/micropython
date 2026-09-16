@@ -153,6 +153,8 @@ mp_lexer_t *mp_lexer_new_from_file(qstr filename) {
 
 // Called if an exception is raised outside all C exception-catching handlers.
 void nlr_jump_fail(void *val) {
+    mp_printf(&mp_plat_print, "FATAL: uncaught exception %p\n", val);
+    mp_obj_print_exception(&mp_plat_print, MP_OBJ_FROM_PTR(val));
     for (;;) {
     }
 }
