@@ -28,6 +28,7 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
 INC += -I$(BOARD_DIR)
+INC += -Ibsp
 
 BOOT_IMG = boot.bin
 CFLAGS_CORTEX_A9 = -mthumb -mcpu=cortex-a9 -msoft-float -fsingle-precision-constant \
@@ -63,10 +64,13 @@ SHARED_SRC_C += $(addprefix shared/,\
 
 SRC_C = \
 	main.c \
-	xuartps.c \
-	xuartps_hw.c \
 	uart_core.c \
 	mphalport.c \
+
+BSP_SRC_C += $(addprefix bsp/,\
+	xuartps.c \
+	xuartps_hw.c \
+	)
 
 OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SHARED_SRC_C:.c=.o))
