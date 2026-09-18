@@ -1,3 +1,6 @@
+#ifndef ZYNQ_SYSTEM_H
+#define ZYNQ_SYSTEM_H
+
 #include "xparameters_ps.h"
 
 #define PS_CLK 33330000
@@ -34,7 +37,7 @@
 
 #define	XUARTPS_BASEADDRESS	XPAR_XUARTPS_1_BASEADDR
 
-// utils
+// Utils
 static inline void set_bit(unsigned int nr, volatile unsigned int *addr)
 {
     unsigned int mask = 1U << nr;
@@ -60,3 +63,5 @@ static inline void delay(volatile unsigned int cycles)
 // xil_printf.h
 // extern void outbyte (char c); /**< To send byte */
 // extern char inbyte(void); /**< To receive byte */
+
+#endif // ZYNQ_SYSTEM_H
