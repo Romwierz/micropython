@@ -9,5 +9,4 @@
 *.map
 *.tar.xz
 *.bkup
-bsp/
 .gdb_history
