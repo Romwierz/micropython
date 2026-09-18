@@ -9,4 +9,7 @@
 *.map
 *.tar.xz
 *.bkup
+bsp/*/data
+bsp/*/doc
+bsp/*/examples
 .gdb_history
