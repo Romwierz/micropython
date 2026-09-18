@@ -24,7 +24,6 @@
 
 // Disable all optional sys module features.
 #define MICROPY_PY_SYS_MODULES            (0)
-#define MICROPY_PY_SYS_EXIT               (0)
 #define MICROPY_PY_SYS_PATH               (0)
 #define MICROPY_PY_SYS_ARGV               (0)
 
@@ -32,6 +31,9 @@
 #define MICROPY_VFS                         (1)
 #define MICROPY_LONGINT_IMPL                (MICROPY_LONGINT_IMPL_MPZ)
 
+// Extended modules
+#define MICROPY_PY_MACHINE          (1)
+#define MICROPY_PY_MACHINE_INCLUDEFILE "ports/zynq/modmachine.c"
 // type definitions for the specific machine
 
 typedef long mp_off_t;
