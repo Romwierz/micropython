@@ -1,4 +1,5 @@
 #include "py/mpconfig.h"
+#include "scutimer.h"
 #include "xuartps_hw.h"
 #include "py/runtime.h"
 #include "py/mphal.h"
@@ -19,12 +20,16 @@ mp_uint_t mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
     return ret;
 }
 
+mp_uint_t mp_hal_ticks_100ns(void) {
+    return (mp_uint_t)(SCUTIMER_COUNTER_MAX_VALUE - scutimer_get_count());
+}
+
 mp_uint_t mp_hal_ticks_us(void) {
-    return 0;
+    return mp_hal_ticks_100ns() / 10;
 }
 
 mp_uint_t mp_hal_ticks_ms(void) {
-    return 0;
+    return mp_hal_ticks_100ns() / 10000;
 }
 
 void mp_hal_delay_us(mp_uint_t us) {

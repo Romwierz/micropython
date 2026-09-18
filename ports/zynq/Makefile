@@ -29,6 +29,7 @@ INC += -I$(TOP)
 INC += -I$(BUILD)
 INC += -I$(BOARD_DIR)
 INC += -Ibsp
+INC += -Ibsp/scutimer_v2_7/src
 
 BOOT_IMG = boot.bin
 CFLAGS_CORTEX_A9 = -mthumb -mcpu=cortex-a9 -msoft-float -fsingle-precision-constant \
@@ -63,6 +64,7 @@ SHARED_SRC_C += $(addprefix shared/,\
 	)
 
 SRC_C = \
+	scutimer.c \
 	main.c \
 	uart_core.c \
 	mphalport.c \
@@ -72,9 +74,17 @@ BSP_SRC_C += $(addprefix bsp/,\
 	xuartps_hw.c \
 	)
 
+BSP_SRC_C += $(addprefix bsp/scutimer_v2_7/src/,\
+	xscutimer.c \
+	xscutimer_g.c \
+	xscutimer_selftest.c \
+	xscutimer_sinit.c \
+	)
+
 OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SHARED_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(BSP_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
 SRC_QSTR += $(SRC_C) $(SHARED_SRC_C)

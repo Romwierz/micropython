@@ -28,17 +28,20 @@
 
 #include "py/builtin.h"
 #include "py/compile.h"
+#include "py/mphal.h"
 #include "py/runtime.h"
 #include "py/gc.h"
 #include "py/mperrno.h"
 #include "shared/runtime/pyexec.h"
-#include "xuartps_hw.h"
 
 #include "gccollect.h"
-#include "xil_io.h"
-#include "xuartps.h"
 #include "xparameters.h"
+#include "xil_io.h"
 #include "system.h"
+
+#include "scutimer.h"
+
+static char *stack_top;
 
 int uart_init(UINTPTR BaseAddress);
 void blink_leds(void);
@@ -78,11 +81,13 @@ void do_str(const char *src, mp_parse_input_kind_t input_kind) {
 }
 #endif
 
-static char *stack_top;
-
 // Main entry point: initialise the runtime and execute demo strings.
 int main(void) {
 	uart_init(XUARTPS_BASEADDRESS);
+
+    // Initialize and start SCU timer
+    if(scutimer_init() == XST_SUCCESS)
+        scutimer_start();
 
     // Stack limit init
     mp_cstack_init_with_top(&_stack_end, (char *)&_stack_end - (char *)&_stack);
@@ -172,9 +177,12 @@ void blink_leds(void) {
     while(1) {
         clear_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
         set_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
-        delay(4000000U);
+        mp_printf(MP_PYTHON_PRINTER, "%u ms\n", mp_hal_ticks_ms());
+        mp_hal_delay_ms(1000);
+
         set_bit(0, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
         clear_bit(9, (volatile unsigned int *)(XPAR_GPIO0_BASEADDR + DATA0));
-        delay(4000000U);
+        mp_printf(MP_PYTHON_PRINTER, "%u ms\n", mp_hal_ticks_ms());
+        mp_hal_delay_ms(1000);
     };
 }
