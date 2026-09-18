@@ -52,17 +52,6 @@ void configure_mio0_9(void)
     Xil_Out32(XPAR_SLCR_BASEADDR + MIO_PIN_09, MIO_PIN_DisableRcvr | MIO_PIN_IO_Type_LVCMOS18);
 }
 
-static const char *demo_single_input =
-    "print('hello world!', list(x + 1 for x in range(10)), end='eol\\n')";
-
-static const char *demo_file_input =
-    "import micropython\n"
-    "\n"
-    "print(dir(micropython))\n"
-    "\n"
-    "for i in range(10):\n"
-    "    print('iter {:08}'.format(i))";
-
 #if MICROPY_ENABLE_COMPILER
 void do_str(const char *src, mp_parse_input_kind_t input_kind) {
     nlr_buf_t nlr;
@@ -101,8 +90,6 @@ int main(void) {
     // Execute _boot.py
     pyexec_frozen_module("_boot.py", false);
 
-    do_str(demo_single_input, MP_PARSE_SINGLE_INPUT);
-    do_str(demo_file_input, MP_PARSE_FILE_INPUT);
     #if MICROPY_REPL_EVENT_DRIVEN
     pyexec_event_repl_init();
     for (;;) {
@@ -114,8 +101,6 @@ int main(void) {
     #else
     pyexec_friendly_repl();
     #endif
-    do_str("print('hello world!', list(x+1 for x in range(10)), end='eol\\n')", MP_PARSE_SINGLE_INPUT);
-    do_str("for i in range(10):\r\n  print(i)", MP_PARSE_FILE_INPUT);
 
     soft_reset_exit:
     mp_printf(MP_PYTHON_PRINTER, "MPY: soft reboot (not yet implemented)\n");
