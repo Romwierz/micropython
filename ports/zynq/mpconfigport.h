@@ -34,6 +34,7 @@
 // Extended modules
 #define MICROPY_PY_MACHINE          (1)
 #define MICROPY_PY_MACHINE_INCLUDEFILE "ports/zynq/modmachine.c"
+#define MICROPY_PY_MACHINE_BARE_METAL_FUNCS (1)
 // type definitions for the specific machine
 
 typedef long mp_off_t;

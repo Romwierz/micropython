@@ -1,7 +1,10 @@
 MicroPython port to Zynq SoC
 ============================
 
-This is a port of MicroPython to the Zynq SoC.
+This is a port of MicroPython to the Zynq SoC. Currently in work for Z-Turn board.
+
+Features:
+- REPL over USB_UART (UART1).
 
 Contributing to this port
 =========================
