@@ -1,6 +1,9 @@
 #ifndef XPARAMETERS_H   /* prevent circular inclusions */
 #define XPARAMETERS_H   /* by using protection macros */
 
+/* Canonical definitions for peripheral PS7_CORTEXA9_0 */
+#define XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ 666666687
+
 #define XPAR_XCANPS_NUM_INSTANCES 1
 
 /* Definitions for peripheral CAN0 */
@@ -172,6 +175,7 @@
 #define XPAR_SCUTIMER_HIGHADDR 0xf8f0061f
 #define XPAR_SCUTIMER_INTERRUPTS 0x13100d
 #define XPAR_SCUTIMER_INTERRUPT_PARENT 0xf8f01000
+#define XPAR_PS7_SCUTIMER_0_DEVICE_ID 0
 
 /* Canonical definitions for peripheral SCUTIMER */
 #define XPAR_XSCUTIMER_0_BASEADDR 0xf8f00600
@@ -179,6 +183,7 @@
 #define XPAR_XSCUTIMER_0_COMPATIBLE "arm,cortex-a9-twd-timer"
 #define XPAR_XSCUTIMER_0_INTERRUPTS 0x13100d
 #define XPAR_XSCUTIMER_0_INTERRUPT_PARENT 0xf8f01000
+#define XPAR_XSCUTIMER_0_DEVICE_ID XPAR_PS7_SCUTIMER_0_DEVICE_ID
 
 #define XPAR_XSCUWDT_NUM_INSTANCES 1
 

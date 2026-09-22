@@ -22,18 +22,27 @@ FROZEN_MANIFEST ?= manifest.py
 include $(TOP)/py/py.mk
 include $(TOP)/extmod/extmod.mk
 
+GIT_SUBMODULES += lib/xilinx-embeddedsw
+
 CROSS_COMPILE ?= $${XILINX_VITIS}/gnu/aarch32/lin/gcc-arm-none-eabi/bin/arm-none-eabi-
+
+BSP_STANDALONE = $(TOP)/lib/xilinx-embeddedsw/lib/bsp/standalone
+BSP_DRIVERS = $(TOP)/lib/xilinx-embeddedsw/XilinxProcessorIPLib/drivers
 
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
 INC += -I$(BOARD_DIR)
-INC += -Ibsp
-INC += -Ibsp/scutimer_v2_7/src
+INC += -I$(BSP_STANDALONE)/src/common
+INC += -I$(BSP_STANDALONE)/src/arm/cortexa9
+INC += -I$(BSP_STANDALONE)/src/arm/common/gcc
+INC += -I$(BSP_DRIVERS)/uartps/src
+INC += -I$(BSP_DRIVERS)/scutimer/src
 
 BOOT_IMG = boot.bin
 CFLAGS_CORTEX_A9 = -mthumb -mcpu=cortex-a9 -msoft-float -fsingle-precision-constant \
 				   -Wdouble-promotion -Wfloat-conversion -DSDT -specs=Xilinx.spec
+CFLAGS += -D_POSIX_C_SOURCE=200809
 # Use C_ADD_FLAGS to pass flags when invoking make
 CFLAGS += $(INC) -Wall -Werror -std=c99 $(CFLAGS_CORTEX_A9) $(C_ADD_FLAGS)
 LDFLAGS += -nostdlib -T lscript.ld -Wl,-Map=$@.map -Wl,--cref -Wl,--gc-sections
@@ -69,12 +78,23 @@ SRC_C = \
 	uart_core.c \
 	mphalport.c \
 
-BSP_SRC_C += $(addprefix bsp/,\
+BSP_SRC_C += $(addprefix $(BSP_STANDALONE:$(TOP)/%=%)/src/arm/cortexa9/,\
+	usleep.c \
+	xtime_l.c \
+	)
+
+BSP_SRC_C += $(addprefix $(BSP_STANDALONE:$(TOP)/%=%)/src/common/,\
+	xplatform_info.c \
+	xil_sutil.c \
+	xil_sleepcommon.c \
+	)
+
+BSP_SRC_C += $(addprefix $(BSP_DRIVERS:$(TOP)/%=%)/uartps/src/,\
 	xuartps.c \
 	xuartps_hw.c \
 	)
 
-BSP_SRC_C += $(addprefix bsp/scutimer_v2_7/src/,\
+BSP_SRC_C += $(addprefix $(BSP_DRIVERS:$(TOP)/%=%)/scutimer/src/,\
 	xscutimer.c \
 	xscutimer_g.c \
 	xscutimer_selftest.c \
